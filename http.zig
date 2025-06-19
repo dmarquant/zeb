@@ -3,6 +3,7 @@ const std = @import("std");
 const Error = error{
     AllocationFailure,
     IoError,
+    UnknownMethod,
     UnexpectedEof,
     UnexpectedChar,
 };
@@ -10,7 +11,7 @@ const Error = error{
 pub const Request = struct {
     data: []const u8,
 
-    method: []const u8,
+    method: Method,
     url: []const u8,
     headerData: []const u8,
 
@@ -47,14 +48,15 @@ pub const Request = struct {
     }
 };
 
-// TODO: Why separate bits?
-pub const GET = 0x01;
-pub const HEAD = 0x02;
-pub const POST = 0x04;
-pub const PUT = 0x08;
-pub const DELETE = 0x0F;
-pub const OPTIONS = 0x10;
-pub const PATCH = 0x20;
+pub const Method = enum {
+    GET,
+    HEAD,
+    POST,
+    PUT,
+    DELETE,
+    OPTIONS,
+    PATCH,
+};
 
 pub fn parse(reader: anytype, allocator: std.mem.Allocator) Error!Request {
     var parser = Parser(@TypeOf(reader)).init(reader, allocator);
@@ -80,9 +82,9 @@ fn Parser(comptime ReaderType: type) type {
         fn parse(p: *Self) Error!Request {
             errdefer p.allocator.free(p.buf);
 
-            const method = try p.takeWhile(isMethodChar);
-
+            const methodStr = try p.takeWhile(isMethodChar);
             try p.expect(' ');
+            const method = parseMethod(methodStr) orelse return Error.UnknownMethod;
 
             const url = try urlDecodeInplace(try p.takeWhile(isUrlChar));
             // TODO: Url decoding
@@ -153,6 +155,26 @@ fn Parser(comptime ReaderType: type) type {
             return p.buf[start..p.ix];
         }
     };
+}
+
+fn parseMethod(str: []const u8) ?Method {
+    if (std.mem.eql(u8, str, "GET")) {
+        return .GET;
+    } else if (std.mem.eql(u8, str, "POST")) {
+        return .POST;
+    } else if (std.mem.eql(u8, str, "PUT")) {
+        return .PUT;
+    } else if (std.mem.eql(u8, str, "DELETE")) {
+        return .DELETE;
+    } else if (std.mem.eql(u8, str, "HEAD")) {
+        return .HEAD;
+    } else if (std.mem.eql(u8, str, "OPTIONS")) {
+        return .OPTIONS;
+    } else if (std.mem.eql(u8, str, "PATCH")) {
+        return .PATCH;
+    } else {
+        return null;
+    }
 }
 
 fn isMethodChar(c: u8) bool {

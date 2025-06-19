@@ -5,7 +5,36 @@ const assert = std.debug.assert;
 const expect = std.testing.expect;
 const expectEqualSlices = std.testing.expectEqualSlices;
 
-pub fn match(comptime rule: []const u8, req: http.Request) ?checkUrlResultType(rule) {
+pub const Methods = struct {
+    GET: bool = false,
+    HEAD: bool = false,
+    POST: bool = false,
+    PUT: bool = false,
+    DELETE: bool = false,
+    OPTIONS: bool = false,
+    PATCH: bool = false,
+};
+
+pub const GET = Methods{ .GET = true };
+pub const POST = Methods{ .GET = true };
+
+pub fn match(comptime rule: []const u8, comptime methods: Methods, req: http.Request) ?checkUrlResultType(rule) {
+    const methodMatch = switch (req.method) {
+        .GET => methods.GET,
+        .HEAD => methods.HEAD,
+        .POST => methods.POST,
+        .PUT => methods.PUT,
+        .DELETE => methods.DELETE,
+        .OPTIONS => methods.OPTIONS,
+        .PATCH => methods.PATCH,
+    };
+    if (!methodMatch) {
+        return null;
+    }
+    return matchUrl(rule, req.url);
+}
+
+pub fn matchRoute(comptime rule: []const u8, req: http.Request) ?checkUrlResultType(rule) {
     return matchUrl(rule, req.url);
 }
 
