@@ -16,7 +16,9 @@ pub const Methods = struct {
 };
 
 pub const GET = Methods{ .GET = true };
-pub const POST = Methods{ .GET = true };
+pub const POST = Methods{ .POST = true };
+pub const PUT = Methods{ .PUT = true };
+pub const DELTE = Methods{ .DELTE = true };
 
 pub fn match(comptime rule: []const u8, comptime methods: Methods, req: http.Request) ?checkUrlResultType(rule) {
     const methodMatch = switch (req.method) {
