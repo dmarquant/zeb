@@ -125,12 +125,12 @@ fn checkUrlResultType(comptime rule: []const u8) type {
         switch (part) {
             .constant => {},
             .variable => |variable| {
-                paramDefs[iParam] = .{ .name = makeName(variable.name), .type = variable.type, .default_value = null, .is_comptime = false, .alignment = 0 };
+                paramDefs[iParam] = .{ .name = makeName(variable.name), .type = variable.type, .default_value_ptr = null, .is_comptime = false, .alignment = 0 };
                 iParam += 1;
             },
         }
     }
-    return @Type(.{ .Struct = .{ .layout = .auto, .fields = paramDefs[0..], .decls = &[_]std.builtin.Type.Declaration{}, .is_tuple = false } });
+    return @Type(.{ .@"struct" = .{ .layout = .auto, .fields = paramDefs[0..], .decls = &[_]std.builtin.Type.Declaration{}, .is_tuple = false } });
 }
 
 fn matchUrl(comptime rule: []const u8, url: []const u8) ?checkUrlResultType(rule) {
