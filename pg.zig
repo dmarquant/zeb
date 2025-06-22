@@ -2,8 +2,6 @@ const std = @import("std");
 const assert = std.debug.assert;
 const Allocator = std.mem.Allocator;
 
-const prof = @import("prof.zig");
-
 const Error = error{
     Unsupported,
     Protocol,
@@ -131,8 +129,6 @@ pub const Connection = struct {
     }
 
     fn sendQuery(conn: *Connection, queryStr: []const u8) !void {
-        prof.writeStart("send query", "pg");
-
         var bufWriter = std.io.bufferedWriter(conn.stream.writer());
         const writer = bufWriter.writer();
 
@@ -142,8 +138,6 @@ pub const Connection = struct {
         try writer.writeAll(queryStr);
         try writer.writeByte(0);
         try bufWriter.flush();
-
-        prof.writeEnd();
     }
 
     pub fn init(stream: std.net.Stream, allocator: Allocator) !Connection {
